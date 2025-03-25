@@ -3,48 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Browser Camera Access</title>
+    <title>Age Authentication</title>
+    <style>
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 20px;
+            padding: 20px;
+        }
+        video, img {
+            border: 2px solid #ccc;
+            border-radius: 8px;
+        }
+    </style>
 </head>
 <body>
-    <video id="video" width="640" height="480" autoplay></video>
-    <canvas id="canvas" style="display:none;"></canvas>
-    <div id="output"></div>
+    <div class="container">
+        <video id="video" width="640" height="480" autoplay></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+        <img id="output" width="640" height="480" />
+    </div>
 
     <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
+        const output = document.getElementById('output');
         const context = canvas.getContext('2d');
 
-        // Request access to the webcam
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(function(stream) {
-                video.srcObject = stream;
-            })
-            .catch(function(err) {
-                console.error("Error accessing webcam: ", err);
-            });
+        // Set canvas dimensions
+        canvas.width = 640;
+        canvas.height = 480;
 
-        // Send frames to the server
-        setInterval(() => {
-            context.drawImage(video, 0, 0, 640, 480);
-            const imageData = canvas.toDataURL('image/jpeg');
-            
-            fetch('/video_feed', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    image: imageData
-                })
-            })
-            .then(response => response.blob())
-            .then(blob => {
-                const url = URL.createObjectURL(blob);
-                document.getElementById('output').innerHTML = `<img src="${url}">`;
-            })
-            .catch(error => console.error('Error:', error));
-        }, 100); // Send frame every 100ms
+        // Request camera access
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error("Error accessing camera:", err);
+            }
+        }
+
+        // Process frames
+        async function processFrame() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                // Draw video frame to canvas
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // Get image data
+                const imageData = canvas.toDataURL('image/jpeg');
+
+                try {
+                    // Send to server
+                    const response = await fetch('/video_feed', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ image: imageData })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        output.src = data.image;
+                    } else {
+                        console.error('Server error:', await response.text());
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            }
+            // Continue processing frames
+            requestAnimationFrame(processFrame);
+        }
+
+        // Start the application
+        startCamera().then(() => {
+            video.onloadedmetadata = () => {
+                processFrame();
+            };
+        });
     </script>
 </body>
 </html>
