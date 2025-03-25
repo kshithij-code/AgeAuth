@@ -24,3 +24,12 @@ After installing any new library, make sure to update the `requirements.txt` fil
 # Update the requirements.txt file
 pip freeze > requirements.txt
 ```
+
+## Ignoring Test Data
+To prevent test data files from being tracked by Git, add the appropriate patterns to the `.gitignore` file. For example:
+
+```bash
+# Ignore test data files
+test_data/
+*.testdata
+```
