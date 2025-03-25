@@ -3,10 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Stream</title>
+    <title>Browser Camera Access</title>
 </head>
 <body>
-    <h1>Live Video Stream</h1>
-    <img src="{{ url_for('video_feed') }}" width="640" height="480">
+    <video id="video" width="640" height="480" autoplay></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <div id="output"></div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+
+        // Request access to the webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                video.srcObject = stream;
+            })
+            .catch(function(err) {
+                console.error("Error accessing webcam: ", err);
+            });
+
+        // Send frames to the server
+        setInterval(() => {
+            context.drawImage(video, 0, 0, 640, 480);
+            const imageData = canvas.toDataURL('image/jpeg');
+            
+            fetch('/video_feed', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image: imageData
+                })
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                document.getElementById('output').innerHTML = `<img src="${url}">`;
+            })
+            .catch(error => console.error('Error:', error));
+        }, 100); // Send frame every 100ms
+    </script>
 </body>
 </html>
