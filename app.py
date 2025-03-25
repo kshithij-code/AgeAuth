@@ -3,13 +3,7 @@ import cv2
 
 app = Flask(__name__)
 
-for i in range(5): 
-    cap = cv2.VideoCapture(i)
-    if cap.isOpened():
-        print(f"✅ Camo Studio (or another camera) detected at index {i}")
-        cap.release()
-    else:
-        print(f"❌ No camera found at index {i}")
+camera=cv2.VideoCapture(0)
 
 
 def generate_frames():

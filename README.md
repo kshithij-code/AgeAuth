@@ -5,11 +5,17 @@ To create and activate a virtual environment, and then install the required pack
 python -m venv .venv
 
 # Activate the virtual environment
-# On Windows
 .venv\Scripts\activate
-# On Unix or MacOS
-source .venv/bin/activate
 
 # Install the required packages
 pip install -r requirements.txt
+
+# Run the application
+python app.py
+```
+After installing any new library, make sure to update the `requirements.txt` file by running the following command:
+
+```bash
+# Update the requirements.txt file
+pip freeze > requirements.txt
 ```
