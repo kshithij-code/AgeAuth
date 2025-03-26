@@ -9,6 +9,9 @@ app = Flask(__name__)
 @app.route('/')
 def index():
     return render_template('index.html')
+@app.route('/admin')
+def User():
+    return 'you r gay'
 
 @app.route('/video_feed', methods=['POST'])
 def video_feed():
